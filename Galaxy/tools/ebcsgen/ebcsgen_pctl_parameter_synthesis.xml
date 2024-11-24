@@ -1,0 +1,78 @@
+<tool id="eBCSgen_PCTL_parameter_synthesis" name="eBCSgen PCTL parameter synthesis" version="@TOOL_VERSION@_galaxy0">
+    <description>- PCTL parameter synthesis of given parametric transition system</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <requirements>
+        <container type="docker">sybila/ebcsgen:v@TOOL_VERSION@</container>
+    </requirements>
+
+    <options sanitize="False"/>
+    <command>python3 ${__tool_directory__}/ebcsgen_pctl_parameter_synthesis.py
+        --transition_file '$transition_file'
+        #if len($regions) > 0:
+        --output '$output_regions'
+        #else:
+        --output '$output_sample'
+        #end if
+        --formula '$formula'
+
+        #set parameters = ",".join([str($s.from) + "=" + str($s.param) + "=" + str($s.to) for $s in $regions])
+        #if $parameters:
+        --region '$parameters'
+        #end if
+    </command>
+
+    <inputs>
+        <param format="bcsl.ts" name="transition_file" type="data" label="Computed Transition system"/>
+        <param name="formula" type="text" label="PCTL formula">
+            <validator type="empty_field"/>
+        </param>
+
+        <repeat name="regions" title="Parameter intervals">
+            <param name="param" value="" type="text" label="Parameter name:">
+                <validator type="empty_field"/>
+            </param>
+            <param name="from" type="float" value="" label="Interval start:"/>
+            <param name="to" type="float" value="" label="Interval end:"/>
+        </repeat>
+    </inputs>
+
+    <outputs>
+        <data format="csv" name="output_regions">
+            <filter>"?" not in formula</filter>
+        </data>
+        <data format="storm.sample" name="output_sample">
+            <filter>"?" in formula</filter>
+        </data>
+    </outputs>
+
+    <tests>
+        <test>
+            <param name="transition_file" value="parametrised.bcsl.ts" ftype="bcsl.ts"/>
+            <param name="formula" value="P&lt;=0.2 [F P2(active{on})::cell &gt; 0]"/>
+            <repeat name="regions">
+                <param name="param" value="param_sig"/>
+                <param name="from" value="0.1"/>
+                <param name="to" value="0.6"/>
+            </repeat>
+            <repeat name="regions">
+                <param name="param" value="param_block"/>
+                <param name="from" value="0.05"/>
+                <param name="to" value="1.0"/>
+            </repeat>
+            <output name="output_regions" value="pctl_syntheisis_regions.csv" ftype="csv"/>
+        </test>
+        <test>
+            <param name="transition_file" value="parametrised.bcsl.ts" ftype="bcsl.ts"/>
+            <param name="formula" value="P=? [F P2(active{on})::cell &gt; 0]"/>
+            <output name="output_sample" ftype="storm.sample">
+                <assert_contents>
+                    <has_text text="Result (initial states):"/>
+                </assert_contents>
+             </output>
+        </test>
+    </tests>
+
+</tool>

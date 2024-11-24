@@ -1,0 +1,96 @@
+<tool id="eBCSgen_simulate" name="eBCSgen simulation" version="@TOOL_VERSION@_galaxy0">
+    <description>- simulate given model</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <requirements>
+        <container type="docker">sybila/ebcsgen:v@TOOL_VERSION@</container>
+    </requirements>
+
+    <command>python3 ${__tool_directory__}/ebcsgen_simulate.py
+        --model '$model'
+        --output '$output'
+        --deterministic '$type.deterministic_choice'
+        #if $type.deterministic_choice == "True":
+            --direct False
+            --runs 1
+            --volume '$type.volume'
+            --step '$type.step'
+        #else:
+            --direct '$type.network_free_choice'
+            --runs '$type.num_of_runs'
+            --volume 1
+            --step 0.01
+        #end if
+        --max_time '$max_time'
+    </command>
+
+    <inputs>
+        <param format="bcsl.model" name="model" type="data" label="Model file" help="Provide a BCSL model file"/>
+        <conditional name="type">
+            <param name="deterministic_choice" type="select" label="Choose simulation method:">
+                <option value="False" selected="true">Stochastic</option>
+                <option value="True">Deterministic</option>
+            </param>
+            <when value="False">
+                <param name="network_free_choice" type="select" label="Choose network-free approach:">
+                    <option value="False" selected="true">Indirect</option>
+                    <option value="True">Direct</option>
+                </param>
+                <param name="num_of_runs" min="1" type="integer" value="1" label="Number of runs:"/>
+            </when>
+            <when value="True">
+                <param name="volume" min="0" type="integer" value="1" label="Volume (liters):"/>
+                <param name="step" min="0" type="float" value="0.01" label="Simulation step:"/>
+            </when>
+        </conditional>
+        <param name="max_time" min="0" type="integer" value="1" label="Maximum simulation time:"/>
+    </inputs>
+
+    <outputs>
+        <data format="csv" name="output"/>
+    </outputs>
+
+    <tests>
+        <test>
+            <param name="model" value="repressilator.bcsl.model" ftype="bcsl.model"/>
+            <section name="type">
+                <param name="deterministic_choice" value="True"/>
+                <param name="step" value="0.1"/>
+            </section>
+            <param name="max_time" value="100"/>
+            <output name="output" value="simulation_determ.csv" ftype="csv"/>
+        </test>
+        <test>
+            <param name="model" value="repressilator.bcsl.model" ftype="bcsl.model"/>
+            <section name="type">
+                <param name="deterministic_choice" value="False"/>
+                <param name="network_free_choice" value="False"/>
+                <param name="num_of_runs" value="2"/>
+            </section>
+            <param name="max_time" value="200"/>
+            <output name="output" ftype="csv">
+                <assert_contents>
+                    <has_n_columns n="4" sep=","/>
+                    <has_n_lines min="10"/>
+                </assert_contents>
+            </output>
+        </test>
+        <test>
+            <param name="model" value="repressilator.bcsl.model" ftype="bcsl.model"/>
+            <section name="type">
+                <param name="deterministic_choice" value="False"/>
+                <param name="network_free_choice" value="True"/>
+                <param name="num_of_runs" value="1"/>
+            </section>
+            <param name="max_time" value="100"/>
+            <output name="output" ftype="csv">
+                <assert_contents>
+                    <has_n_columns n="4" sep=","/>
+                    <has_n_lines min="10"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+</tool>

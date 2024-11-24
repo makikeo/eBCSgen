@@ -1,0 +1,15 @@
+#! rules
+X()::rep => @ k1*[X()::rep]
+Y()::rep => @ k2*[Y()::rep]
+Z()::rep => @ k1*[Z()::rep]
+ => X()::rep @ 5**4/(5**4+[Z()::rep]**4)
+ => Y()::rep @ 5**4/(5**4+[X()::rep]**4)
+ => Z()::rep @ 5**4/(5**4+[Y()::rep]**4)
+
+#! inits
+1 X()::rep
+1 Y()::rep
+
+#! definitions
+k1 = 0.05
+k2 = 0.12

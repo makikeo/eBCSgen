@@ -1,0 +1,58 @@
+<tool id="eBCSgen_generate_transition_system" name="eBCSgen transition system generator" version="@TOOL_VERSION@_galaxy0">
+    <description>- generate transition system of the given model</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <requirements>
+        <container type="docker">sybila/ebcsgen:v@TOOL_VERSION@</container>
+    </requirements>
+
+    <command>python3 ${__tool_directory__}/ebcsgen_generate_ts.py
+        --model '$model'
+        --output '$output'
+        --direct '$network_free_choice'
+        #if $adv.bound != "":
+        --bound '$adv.bound'
+        #end if
+        #if $adv.max_time != "":
+        --max_time '$adv.max_time'
+        #end if
+        #if $adv.max_size != "":
+        --max_size '$adv.max_size'
+        #end if
+    </command>
+
+    <inputs>
+        <param format="bcsl.model" name="model" type="data" label="Model file" help="Provide a BCSL model file"/>
+        <param name="network_free_choice" type="select" label="Choose network-free approach:">
+            <option value="False" selected="true">Indirect</option>
+            <option value="True">Direct</option>
+        </param>
+        <section name="adv" title="Advanced Options" expanded="false">
+            <param name="bound" min="0" type="integer" value="" label="Bound [optional]" optional="true"/>
+            <param name="max_time" min="0" type="float" value=""
+                   label="Maximal computation time (in seconds) [optional]" optional="true"/>
+            <param name="max_size" min="1" type="integer" value="" label="Maximal TS size [optional]" optional="true"/>
+        </section>
+    </inputs>
+
+    <outputs>
+        <data label="Transition system of ${on_string}" format="bcsl.ts" name="output"/>
+    </outputs>
+
+    <tests>
+        <test>
+            <param name="model" value="simple.bcsl.model" ftype="bcsl.model"/>
+            <output name="output" ftype="bcsl.ts">
+                <assert_contents>
+                    <has_text text="nodes"/>
+                    <has_text text="edges"/>
+                    <has_text text="ordering"/>
+                    <has_text text="initial"/>
+                    <has_n_lines n="98" />
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+</tool>

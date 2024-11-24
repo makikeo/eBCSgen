@@ -1,0 +1,7 @@
+#! rules
+P()::cell => P()::out @ 1.0
+
+#! inits
+1 P()::cell
+
+#! definitions

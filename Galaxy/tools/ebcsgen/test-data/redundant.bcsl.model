@@ -1,0 +1,8 @@
+#! rules
+r1_S ~ P(S{i})::cell => P(S{a})::cell
+r1_T ~ P(T{i})::cell => P(T{a})::cell
+r2 ~ P()::cell => P()::out
+r1_X ~ P(T{i})::cell => P(T{a})::cell
+
+#! inits
+1 P(S{i},T{i})::cell
